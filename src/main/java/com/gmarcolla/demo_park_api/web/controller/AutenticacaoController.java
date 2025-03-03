@@ -2,6 +2,8 @@ package com.gmarcolla.demo_park_api.web.controller;
 
 import com.gmarcolla.demo_park_api.jwt.JwtToken;
 import com.gmarcolla.demo_park_api.jwt.JwtUserDetailsService;
+import com.gmarcolla.demo_park_api.service.UsuarioService;
+import com.gmarcolla.demo_park_api.web.dto.LoginResponseDto;
 import com.gmarcolla.demo_park_api.web.dto.UsuarioLoginDto;
 import com.gmarcolla.demo_park_api.web.dto.UsuarioResponseDto;
 import com.gmarcolla.demo_park_api.web.exception.ErrorMessage;
@@ -30,6 +32,7 @@ import org.springframework.web.bind.annotation.*;
 public class AutenticacaoController {
     private final JwtUserDetailsService detailsService;
     private final AuthenticationManager authenticationManager;
+    private final UsuarioService usuarioService;
 
     @Operation(summary = "Autenticar na API", description = "Recurso de autenticação na API",
             responses = {
@@ -50,9 +53,12 @@ public class AutenticacaoController {
                     new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword());
             authenticationManager.authenticate(authenticationToken);
 
-            JwtToken token = detailsService.getTokenAuthenticated(dto.getUsername());
+            LoginResponseDto responseDto = new LoginResponseDto();
 
-            return ResponseEntity.ok(token);
+            responseDto.setToken(detailsService.getTokenAuthenticated(dto.getUsername()).getToken());
+            responseDto.setRole(usuarioService.buscarPorUsername(dto.getUsername()).getRole().toString());
+
+            return ResponseEntity.ok(responseDto);
         }catch (AuthenticationException ex){
             log.warn("Bad Credential from username {}", dto.getUsername());
         }
